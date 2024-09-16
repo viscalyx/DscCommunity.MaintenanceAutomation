@@ -1,0 +1,37 @@
+{
+    "editor.formatOnSave": true,
+    "cSpell.ignorePaths": [
+        ".git",
+        "settings.json"
+    ],
+    "cSpell.words": [
+        "Relabeler",
+        "relabeler",
+        "unmock",
+        "viscalyx",
+        "Viscalyx",
+        "dbaeumer",
+        "streetsidesoftware",
+        "codecov",
+        "davidanson",
+        "firsttris",
+        "gruntfuggly",
+        "orta",
+        "redhat",
+        "usernamehw",
+        "bierner",
+        "azuretools",
+        "errorlens",
+        "runspace",
+        "azurefunctions",
+        "azurecli"
+    ],
+    "cSpell.ignoreRegExpList": [
+        "devcontainers?"
+    ],
+    "extensions.ignoreRecommendations": true,
+    "azureFunctions.deploySubpath": ".",
+    "azureFunctions.projectLanguage": "PowerShell",
+    "azureFunctions.projectRuntime": "~4",
+    "debug.internalConsoleOptions": "neverOpen"
+}

@@ -1,0 +1,59 @@
+{
+    "name": "Azure Functions PowerShell Development",
+    "dockerFile": "Dockerfile",
+    "runArgs": [
+        "--env-file",
+        ".devcontainer/devcontainer.env"
+    ],
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "powershell.powerShellDefaultVersion": "/usr/bin/pwsh",
+                "terminal.integrated.shell.linux": "/usr/bin/pwsh"
+            },
+            "extensions": [
+                "ms-azuretools.vscode-azurefunctions",
+                "ms-vscode.powershell",
+                "ms-vscode.azurecli",
+                "ms-azuretools.vscode-docker",
+                "streetsidesoftware.code-spell-checker",
+                "codecov.codecov",
+                "davidanson.vscode-markdownlint",
+                "gruntfuggly.todo-tree",
+                "redhat.vscode-yaml",
+                "usernamehw.errorlens",
+                "ms-azuretools.vscode-docker",
+                "bierner.markdown-mermaid"
+            ]
+        }
+    },
+    "postCreateCommand": "pwsh -Command 'Install-Module -Name Az -AllowClobber -Force;Install-Module -Name Pester -Force; func extensions install'",
+    "remoteUser": "vscode",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/DscCommunity.MaintenanceAutomation,type=bind,consistency=cached",
+    "workspaceFolder": "/workspaces/DscCommunity.MaintenanceAutomation",
+    "shutdownAction": "stopContainer",
+    "features": {
+        "ghcr.io/devcontainers/features/azure-cli:1": {},
+        "ghcr.io/devcontainers/features/powershell:1": {},
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {
+            "version": "latest"
+        }
+    },
+    "mounts": [
+        "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+    ],
+    "portsAttributes": {
+        "10000": {
+            "label": "Azurite Blob Service",
+            "onAutoForward": "silent"
+        },
+        "10001": {
+            "label": "Azurite Queue Service",
+            "onAutoForward": "silent"
+        },
+        "10002": {
+            "label": "Azurite Table Service",
+            "onAutoForward": "silent"
+        }
+    }
+}
