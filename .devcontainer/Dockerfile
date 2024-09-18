@@ -12,7 +12,6 @@ ENV POWERSHELL_PACKAGE_REVISION=1
 
 # Install additional packages
 RUN apt-get update \
-    apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
     wget \
     apt-transport-https \
@@ -38,8 +37,11 @@ RUN wget --progress=dot:giga https://packages.microsoft.com/config/debian/$DEBIA
 # Update PowerShell to the specified version
 RUN wget https://github.com/PowerShell/PowerShell/releases/download/v$POWERSHELL_VERSION/powershell_${POWERSHELL_VERSION}-${POWERSHELL_PACKAGE_REVISION}.deb_amd64.deb -O powershell.deb \
     && dpkg -i powershell.deb \
+    && apt-get update \
     && apt-get install -f \
-    && rm powershell.deb
+    && rm powershell.deb \
+    && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN npm install -g n@latest && n $NODE_VERSION \
     && npm install -g npm@latest \
