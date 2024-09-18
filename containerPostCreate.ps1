@@ -9,11 +9,11 @@ Write-Information -MessageData "Installing ModuleFast" -InformationAction Contin
 
 Write-Information -MessageData "Installing runtime dependencies" -InformationAction Continue
 
-Install-ModuleFast -Path './DscCommunity.MaintenanceAutomation/requirements.psd1' -Verbose
+Install-ModuleFast -Path './DscCommunity.MaintenanceAutomation/requirements.psd1'
 
 Write-Information -MessageData "Installing dev dependencies" -InformationAction Continue
 
-Install-ModuleFast -Path './devRequirements.psd1' -Verbose
+Install-ModuleFast -Path './devRequirements.psd1'
 
 Write-Information -MessageData "Installing Azure Functions extensions" -InformationAction Continue
 
