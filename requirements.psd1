@@ -2,7 +2,8 @@
 # See https://aka.ms/functionsmanageddependency for additional information.
 #
 @{
-    # For latest supported version, go to 'https://www.powershellgallery.com/packages/Az'. 
-    # To use the Az module in your function app, please uncomment the line below.
-    # 'Az' = '12.*'
+    # For latest supported version, go to 'https://www.powershellgallery.com/packages/Az'. Uncomment the next line and replace the MAJOR_VERSION, e.g., 'Az' = '5.*'
+    #'Az' = '12.*'
+    'Az.Accounts'            = '3.0.4'
+    'Az.ApplicationInsights' = '2.2.5'
 }

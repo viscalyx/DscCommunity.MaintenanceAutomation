@@ -9,7 +9,7 @@ Write-Information -MessageData "Installing ModuleFast" -InformationAction Contin
 
 Write-Information -MessageData "Installing runtime dependencies" -InformationAction Continue
 
-Install-ModuleFast -Path './DscCommunity.MaintenanceAutomation/requirements.psd1'
+Install-ModuleFast -Path './requirements.psd1'
 
 Write-Information -MessageData "Installing dev dependencies" -InformationAction Continue
 

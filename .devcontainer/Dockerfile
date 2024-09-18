@@ -48,6 +48,13 @@ RUN npm install -g n@latest && n $NODE_VERSION \
     && npm install -g azure-functions-core-tools@4 --unsafe-perm true \
     && npm install -g azurite
 
+# # Install Azure Functions Core Tools
+# RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg \
+#     && mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg \
+#     && sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -cs)-prod $(lsb_release -cs) main" > /etc/apt/sources.list.d/dotnetdev.list' \
+#     && apt-get update \
+#     && apt-get install -y azure-functions-core-tools-4
+
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
     locale-gen en_US.UTF-8
 
@@ -90,5 +97,5 @@ RUN dotnet tool install --global GitVersion.Tool
 # Add alias for gitversion, ensuring a newline before the alias
 RUN printf "\nalias gitversion=\"dotnet-gitversion\"\n" >> /home/$USERNAME/.bashrc
 
-# Set the default shell to pwsh
-SHELL ["/bin/pwsh", "-c"]
+# Set the default shell to PowerShell (/usr/bin/pwsh)
+SHELL ["pwsh", "-Command"]
