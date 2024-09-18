@@ -24,7 +24,8 @@
         "errorlens",
         "runspace",
         "azurefunctions",
-        "azurecli"
+        "azurecli",
+        "modulefast"
     ],
     "cSpell.ignoreRegExpList": [
         "devcontainers?"

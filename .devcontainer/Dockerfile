@@ -32,7 +32,6 @@ RUN wget --progress=dot:giga https://packages.microsoft.com/config/debian/$DEBIA
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Azurite
 RUN npm install -g n@latest && n $NODE_VERSION \
     && npm install -g npm@latest \
     && npm install -g azure-functions-core-tools@4 --unsafe-perm true \
@@ -69,7 +68,7 @@ ENV DEBIAN_FRONTEND=dialog
 SHELL ["/bin/bash", "-c"]
 
 # Start Azurite when the container starts
-CMD ["azurite", "--blobHost", "0.0.0.0", "--queueHost", "0.0.0.0", "--location", "/workspaces/.azurite", "--silent"]
+#CMD ["azurite", "--blobHost", "0.0.0.0", "--queueHost", "0.0.0.0", "--location", "/workspaces/.azurite", "--silent"]
 
 # Switch to non-root user
 USER $USERNAME

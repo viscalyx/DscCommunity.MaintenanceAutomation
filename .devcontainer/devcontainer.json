@@ -9,7 +9,14 @@
         "vscode": {
             "settings": {
                 "powershell.powerShellDefaultVersion": "/usr/bin/pwsh",
-                "terminal.integrated.shell.linux": "/usr/bin/pwsh"
+                "terminal.integrated.shell.linux": "/usr/bin/pwsh",
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "terminal.integrated.profiles.linux": {
+                    "bash": {
+                        "path": "bash",
+                        "icon": "terminal-bash"
+                    }
+                }
             },
             "extensions": [
                 "ms-azuretools.vscode-azurefunctions",
@@ -27,7 +34,7 @@
             ]
         }
     },
-    "postCreateCommand": "pwsh -Command 'Install-Module -Name Az -AllowClobber -Force;Install-Module -Name Pester -Force; func extensions install'",
+    "postCreateCommand": "pwsh -File ./containerPostCreate.ps1",
     "remoteUser": "vscode",
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/DscCommunity.MaintenanceAutomation,type=bind,consistency=cached",
     "workspaceFolder": "/workspaces/DscCommunity.MaintenanceAutomation",
@@ -55,5 +62,6 @@
             "label": "Azurite Table Service",
             "onAutoForward": "silent"
         }
-    }
+    },
+    "postStartCommand": "bash -c 'sleep 5 && azurite --location /workspaces/.azurite --silent &'"
 }
