@@ -25,7 +25,10 @@
         "runspace",
         "azurefunctions",
         "azurecli",
-        "modulefast"
+        "modulefast",
+        "APPINSIGHTS_KEY",
+        "APPINSIGHTS_CONNECTION_STRING",
+        "IDENTITY_CLIENT_ID"
     ],
     "cSpell.ignoreRegExpList": [
         "devcontainers?"
