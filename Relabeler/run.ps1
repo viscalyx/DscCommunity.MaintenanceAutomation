@@ -66,6 +66,60 @@ catch
 
 if ($payload)
 {
+    # Extract repository API URL from the webhook payload
+    $repoApiUrl = $payload.Repository.Url
+
+    # Simple in-memory caching
+    if (-not $global:ConfigCache)
+    {
+        $global:ConfigCache = @{}
+    }
+
+    $config = $null
+
+    $cacheKey = $repoApiUrl
+
+    if ($global:ConfigCache.ContainsKey($cacheKey))
+    {
+        Write-Information "Configuration retrieved from cache." -InformationAction 'Continue'
+
+        $config = $global:ConfigCache[$cacheKey]
+    }
+    else
+    {
+        # Fetch repository-specific configuration
+        $config = Get-RepoConfig -ApiUrl $repoApiUrl -GithubToken $env:GITHUB_TOKEN
+
+        if ($config)
+        {
+            $global:ConfigCache[$cacheKey] = $config
+        }
+    }
+
+    if ($config)
+    {
+        Write-Host -Object "Using configuration: $($config | Out-String)"
+    }
+    else
+    {
+        Write-Error "Configuration retrieval failed."
+
+        Push-OutputBinding -Name Response -Value ([HttpResponseContext] @{
+                StatusCode = [HttpStatusCode]::BadRequest
+                Body       = "Configuration not found."
+            })
+        return
+    }
+
+    # if (-not $config.actionLabelMapping) {
+    #     Write-Error "Invalid configuration format."
+    #     Push-OutputBinding -Name Response -Value ([HttpResponseContext] @{
+    #         StatusCode = [HttpStatusCode]::BadRequest
+    #         Body       = "Invalid configuration."
+    #     })
+    #     return
+    # }
+
     if ($payload.action)
     {
         $eventAction = $payload.action

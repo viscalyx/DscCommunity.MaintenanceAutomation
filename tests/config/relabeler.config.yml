@@ -1,0 +1,79 @@
+# Could it use "dry-run" of all rules, going throughout all labels, and finally coming out how the PR should be set.
+# What labels it should set and remove after all rules has been evaluated. Then it only set everything once, so
+# there are not unnecessary events kicked off.
+# It could also, mock the set, running the rules on the new labels, to make sure there are no cyclic events
+# if it detects more than 3 cycles, it won't set. Making sure a configuration cannot loop forever.
+
+# Should look for if label is set, or not set.
+pulls:
+  labels:
+    - label:
+        name: "waiting for code fix"
+        add:
+          - when:
+              statuses:
+                continuous-integration/appveyor/pr: failure
+                license/cla: success
+              notLabeled:
+                - on hold
+          - when:
+              statuses:
+                license/cla: success
+              canBeMerged: false
+          - when:
+              statuses:
+                license/cla: success
+              reviewRequestChange: true # Means GitHub Review comment (change without LGTM comment, or blocked)
+        remove:
+          - when:
+              statuses:
+                continuous-integration/appveyor/pr: success
+                license/cla: success
+              canBeMerged: true
+              # To determine this, maybe each review comment int he PR must be evaluated, to finally get true or false.
+              reviewResponseToRequestChange: true # Means one or more GitHub review comments that starts with 'Done'.
+              onPush: true
+          - when:
+              labeled:
+                - on hold
+          - when:
+              reviewApproved: true
+
+    - label:
+        name: "needs review"
+        add:
+          - when:
+              statuses:
+                continuous-integration/appveyor/pr: success
+                license/cla: success
+              canBeMerged: true
+              reviewResponseToRequestChange: true
+              notLabeled:
+                - waiting for author response
+              onPush: true
+        remove:
+          - when:
+              statuses:
+                continuous-integration/appveyor/pr: failure
+          - when:
+              statuses:
+                license/cla: pending
+          - when:
+              canBeMerged: true
+          - when:
+              labeled:
+                - waiting for author response
+
+    - label:
+        name: "ready for merge"
+        add:
+          - when:
+              notLabeled:
+                - waiting for author response
+                - waiting for code fix
+              reviewApproved: true # This could check that only be true if there are no pushes after last approval.
+        remove:
+          - when:
+              labeled:
+                - waiting for author response
+                - waiting for code fix

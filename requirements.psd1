@@ -6,4 +6,5 @@
     #'Az' = '12.*'
     'Az.Accounts'            = '3.0.4'
     'Az.ApplicationInsights' = '2.2.5'
+    'powershell-yaml'        = '0.4.4' # Must use this because never uses netstandard 2.x which is not supported by Azure Functions.
 }

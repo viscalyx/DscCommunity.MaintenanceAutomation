@@ -26,9 +26,9 @@
         "azurefunctions",
         "azurecli",
         "modulefast",
-        "APPINSIGHTS_KEY",
-        "APPINSIGHTS_CONNECTION_STRING",
-        "IDENTITY_CLIENT_ID"
+        "APPINSIGHTS",
+        "INSTRUMENTATIONKEY",
+        "netstandard"
     ],
     "cSpell.ignoreRegExpList": [
         "devcontainers?"

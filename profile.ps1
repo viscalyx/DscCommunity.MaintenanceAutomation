@@ -24,6 +24,13 @@
 # Import necessary modules
 Import-Module Az.ApplicationInsights
 
+# Import the YAML module if the RELABELER_CONFIG_PATH environment variable is not set
+if ([System.String]::IsNullOrEmpty($env:RELABELER_CONFIG_PATH))
+{
+    # Import the YAML module
+    Import-Module powershell-yaml
+}
+
 if ([System.String]::IsNullOrEmpty($env:APPINSIGHTS_INSTRUMENTATIONKEY))
 {
     <#
@@ -120,5 +127,54 @@ function Send-Metric
     catch
     {
         Write-Error "Failed to send metric '$name': $_"
+    }
+}
+
+function Get-RepoConfig
+{
+    param
+    (
+        [string]$ApiUrl,
+        [string]$GithubToken
+    )
+
+    try
+    {
+        # This is to allow for local debugging with a local config file
+        if ([System.String]::IsNullOrEmpty($env:RELABELER_CONFIG_PATH))
+        {
+            $headers = @{
+                "Authorization" = "token $GithubToken"
+                "User-Agent"    = "AzureFunction-Relabeler"
+            }
+
+            $configPath = ".github/relabeler-config.yml"
+            $configApiUrl = "$apiUrl/contents/$configPath"
+
+            Write-Information "Retrieving configuration from $configApiUrl." -InformationAction 'Continue'
+
+            $response = Invoke-RestMethod -Uri $configApiUrl -Headers $headers -Method Get -ErrorAction 'Stop'
+
+            # Decode the base64 content
+            $decodedBytes = [System.Convert]::FromBase64String($response.content)
+
+            # Convert bytes to UTF8 string
+            $content = [System.Text.Encoding]::UTF8.GetString($decodedBytes)
+
+        }
+        else
+        {
+            Write-Information "Using local config file: $env:RELABELER_CONFIG_PATH" -InformationAction 'Continue'
+
+            $content = Get-Content -Raw -Path $env:RELABELER_CONFIG_PATH
+        }
+
+        return $content | ConvertFrom-Yaml
+    }
+    catch
+    {
+        Write-Error "Failed to fetch configuration: $_"
+
+        return $null
     }
 }
