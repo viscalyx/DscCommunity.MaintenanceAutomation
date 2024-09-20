@@ -18,3 +18,11 @@ Install-ModuleFast -Path './devRequirements.psd1'
 Write-Information -MessageData "Installing Azure Functions extensions" -InformationAction Continue
 
 func extensions install
+
+Write-Information -MessageData "Listing installed dotnet SDK versions" -InformationAction Continue
+
+dotnet --list-sdks
+
+Write-Information -MessageData "Listing installed dotnet runtime versions" -InformationAction Continue
+
+dotnet --list-runtimes

@@ -16,7 +16,13 @@
                         "path": "bash",
                         "icon": "terminal-bash"
                     }
-                }
+                },
+                "security.workspace.trust.enabled": true,
+                "security.workspace.trust.untrustedFiles": "open",
+                "security.workspace.trust.trustedFolders": [
+                    "/workspaces/relabeler"
+                ],
+                "security.workspace.trust.startupPrompt": "never"
             },
             "extensions": [
                 "ms-azuretools.vscode-azurefunctions",
@@ -30,12 +36,13 @@
                 "redhat.vscode-yaml",
                 "usernamehw.errorlens",
                 "ms-azuretools.vscode-docker",
-                "bierner.markdown-mermaid"
+                "bierner.markdown-mermaid",
+                "Azurite.azurite"
             ]
         }
     },
     "postCreateCommand": "pwsh -File ./containerPostCreate.ps1",
-    "remoteUser": "vscode",
+    "remoteUser": "root",
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/DscCommunity.MaintenanceAutomation,type=bind,consistency=cached",
     "workspaceFolder": "/workspaces/DscCommunity.MaintenanceAutomation",
     "shutdownAction": "stopContainer",
@@ -62,6 +69,6 @@
             "label": "Azurite Table Service",
             "onAutoForward": "silent"
         }
-    },
-    "postStartCommand": "bash -c 'sleep 5 && azurite --location /workspaces/.azurite --silent &'"
+    }
+    //"postStartCommand": "bash -c 'sleep 10 && azurite --location /workspaces/.azurite --silent &'"
 }

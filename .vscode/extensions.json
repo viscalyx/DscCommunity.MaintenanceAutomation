@@ -9,6 +9,7 @@
     "redhat.vscode-yaml",
     "usernamehw.errorlens",
     "ms-azuretools.vscode-docker",
-    "bierner.markdown-mermaid"
+    "bierner.markdown-mermaid",
+    "Azurite.azurite"
   ]
 }
