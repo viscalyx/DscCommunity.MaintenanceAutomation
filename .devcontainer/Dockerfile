@@ -141,3 +141,5 @@ RUN printf "\nalias gitversion=\"dotnet-gitversion\"\n" >> /root/.bashrc \
 
 # Set the default shell to PowerShell (/usr/bin/pwsh)
 SHELL ["pwsh", "-Command"]
+
+RUN git config --global --add safe.directory /workspaces/DscCommunity.MaintenanceAutomation

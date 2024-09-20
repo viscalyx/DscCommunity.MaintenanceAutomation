@@ -8,7 +8,7 @@
     "customizations": {
         "vscode": {
             "settings": {
-                "powershell.powerShellDefaultVersion": "/usr/bin/pwsh",
+                "powershell.powerShellDefaultVersion": "PowerShell",
                 "terminal.integrated.shell.linux": "/usr/bin/pwsh",
                 "terminal.integrated.defaultProfile.linux": "bash",
                 "terminal.integrated.profiles.linux": {
@@ -16,13 +16,7 @@
                         "path": "bash",
                         "icon": "terminal-bash"
                     }
-                },
-                "security.workspace.trust.enabled": true,
-                "security.workspace.trust.untrustedFiles": "open",
-                "security.workspace.trust.trustedFolders": [
-                    "/workspaces/relabeler"
-                ],
-                "security.workspace.trust.startupPrompt": "never"
+                }
             },
             "extensions": [
                 "ms-azuretools.vscode-azurefunctions",
