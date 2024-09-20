@@ -75,9 +75,13 @@ if ($payload)
         $global:ConfigCache = @{}
     }
 
+    Write-Host -Object "ConfigCache content: $($global:ConfigCache | Out-String)"
+
     $config = $null
 
     $cacheKey = $repoApiUrl
+
+    Write-Host -Object "CacheKey: $cacheKey"
 
     if ($global:ConfigCache.ContainsKey($cacheKey))
     {
@@ -87,12 +91,16 @@ if ($payload)
     }
     else
     {
+        Write-Information "Configuration not found in cache, fetching from GitHub." -InformationAction 'Continue'
+
         # Fetch repository-specific configuration
         $config = Get-RepoConfig -ApiUrl $repoApiUrl -GithubToken $env:GITHUB_TOKEN
 
         if ($config)
         {
             $global:ConfigCache[$cacheKey] = $config
+
+            Write-Information "Configuration has been cached using '$cacheKey'." -InformationAction 'Continue'
         }
     }
 
