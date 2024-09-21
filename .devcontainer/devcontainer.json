@@ -22,7 +22,6 @@
                 "ms-azuretools.vscode-azurefunctions",
                 "ms-vscode.powershell",
                 "ms-vscode.azurecli",
-                "ms-azuretools.vscode-docker",
                 "streetsidesoftware.code-spell-checker",
                 "codecov.codecov",
                 "davidanson.vscode-markdownlint",
