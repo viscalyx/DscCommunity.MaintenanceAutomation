@@ -21,6 +21,11 @@
 
 # You can also define functions or aliases that can be referenced in any of your PowerShell functions.
 
+Write-Host "Loading StackExchange.Redis assembly"
+
+# Load the StackExchange.Redis assembly
+Add-Type -Path (Join-Path $PSScriptRoot './Relabeler/bin/netstandard2.0/StackExchange.Redis.dll')
+
 # Import necessary modules
 Import-Module Az.ApplicationInsights
 
@@ -169,7 +174,8 @@ function Get-RepoConfig
             $content = Get-Content -Raw -Path $env:RELABELER_CONFIG_PATH
         }
 
-        return $content | ConvertFrom-Yaml
+        # Convert YAML to Hashtable, Hashtable to JSON and then JSON to a PowerShell object
+        return [PSCustomObject] ($content | ConvertFrom-Yaml) #| ConvertTo-Json -Depth 10 -Compress | ConvertFrom-Json
     }
     catch
     {

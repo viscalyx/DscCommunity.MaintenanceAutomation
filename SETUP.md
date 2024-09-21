@@ -205,6 +205,21 @@ curl -X POST -H "Content-Type: application/json" \
      http://localhost:7071/api/Relabeler
 ```
 
+## Updated StackExchange.Redis
+
+The StackExchange.Redis package can be downloaded using:
+
+```powershell
+# StackExchange.Redis 2.8.16
+Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/StackExchange.Redis -OutFile stackexchange.redis.nupkg
+# Pipelines.Sockets.Unofficial 2.2.8
+Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/Pipelines.Sockets.Unofficial -OutFile pipelines.sockets.unofficial.nupkg
+# System.IO.Pipelines 8.0.0
+Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/System.IO.Pipelines -OutFile system.io.pipelines.nupkg
+```
+
+Extract the packages and copy the dlls (not the XMLs) from `lib/netstandard2.0` to the path `Relabeler/bin/netstandard2.0`.
+
 ## Random
 
 Randomly generate a secret token and set `secretToken` in `function.json` to the value of `GITHUB_WEBHOOK_SECRET` in `local.settings.json`.

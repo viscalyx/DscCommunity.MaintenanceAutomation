@@ -21,7 +21,20 @@ if (-not $InstrumentationKey)
     return
 }
 
+$redisConnectionString = $env:RELABELER_REDIS_CACHE_CONNECTIONSTRING
+
+if (-not $redisConnectionString)
+{
+    Write-Error "Redis Connection String is not set in Application Settings."
+    Push-OutputBinding -Name Response -Value ([Microsoft.Azure.WebJobs.Extensions.Http.HttpResponseContext]@{
+            Status = [HttpStatusCode]::InternalServerError
+            Body   = "Configuration Error: Missing Redis Connection String."
+        })
+    return
+}
+
 #Write-Information "Test Write-Information" # Same as Write-Host, gives INFORMATION in Azure Logs
+
 #Write-Debug -Message "Test Write-Debug" -Debug # Write-Debug need to have -Debug to output, or pass Debug switch to PowerShell
 #Write-Error -Message "Test Write-Error" # Gives ERROR in Azure Logs
 #Write-Verbose -Message "Test Write-Verbose" -Verbose # Write-Verbose need to have -Verbose to output, or pass Verbose switch to PowerShell
@@ -69,39 +82,60 @@ if ($payload)
     # Extract repository API URL from the webhook payload
     $repoApiUrl = $payload.Repository.Url
 
-    # Simple in-memory caching
-    if (-not $global:ConfigCache)
+    if (-not $redisConnection)
     {
-        $global:ConfigCache = @{}
+        $redisConnection = [StackExchange.Redis.ConnectionMultiplexer]::Connect($redisConnectionString)
     }
 
-    Write-Host -Object "ConfigCache content: $($global:ConfigCache | Out-String)"
-
-    $config = $null
-
-    $cacheKey = $repoApiUrl
-
-    Write-Host -Object "CacheKey: $cacheKey"
-
-    if ($global:ConfigCache.ContainsKey($cacheKey))
+    try
     {
-        Write-Information "Configuration retrieved from cache." -InformationAction 'Continue'
-
-        $config = $global:ConfigCache[$cacheKey]
-    }
-    else
-    {
-        Write-Information "Configuration not found in cache, fetching from GitHub." -InformationAction 'Continue'
-
-        # Fetch repository-specific configuration
-        $config = Get-RepoConfig -ApiUrl $repoApiUrl -GithubToken $env:GITHUB_TOKEN
-
-        if ($config)
+        if (-not $redisDatabase)
         {
-            $global:ConfigCache[$cacheKey] = $config
-
-            Write-Information "Configuration has been cached using '$cacheKey'." -InformationAction 'Continue'
+            $redisDatabase = $redisConnection.GetDatabase()
         }
+
+        $cacheKey = $repoApiUrl
+
+        Write-Host -Object "Looking for key $cacheKey in Redis cache."
+
+        $cacheValue = $redisDatabase.StringGet($cacheKey)
+
+        if ([System.String]::IsNullOrEmpty($cacheValue))
+        {
+            Write-Information "Configuration not found in cache, fetching from GitHub." -InformationAction 'Continue'
+
+            # Fetch repository-specific configuration
+            $config = Get-RepoConfig -ApiUrl $repoApiUrl -GithubToken $env:GITHUB_TOKEN
+
+            if ($config)
+            {
+                $cacheExpiry = [System.TimeSpan]::FromHours(24)
+                $null = $redisDatabase.StringSet($cacheKey, ($config | ConvertTo-Json -Depth 10 -Compress), $cacheExpiry)
+
+                Write-Information "Configuration has been cached using '$cacheKey'." -InformationAction 'Continue'
+            }
+        }
+        else
+        {
+            # This also works: [System.Text.Encoding]::UTF8.GetString($cacheValue.Box())
+            $config = $cacheValue.ToString() | ConvertFrom-Json
+
+            Write-Information "Configuration retrieved from cache." -InformationAction 'Continue'
+        }
+    }
+    catch
+    {
+        Write-Error "Error retrieving configuration from Azure Cache for Redis: $_"
+
+        Push-OutputBinding -Name Response -Value ([Microsoft.Azure.WebJobs.Extensions.Http.HttpResponseContext]@{
+                Status = [HttpStatusCode]::InternalServerError
+                Body   = "Error retrieving configuration from Azure Cache for Redis."
+            })
+    }
+    finally
+    {
+        # Close the Redis connection when done
+        $redisConnection.Dispose()
     }
 
     if ($config)

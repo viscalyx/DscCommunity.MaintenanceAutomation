@@ -28,7 +28,8 @@
         "modulefast",
         "APPINSIGHTS",
         "INSTRUMENTATIONKEY",
-        "netstandard"
+        "netstandard",
+        "CONNECTIONSTRING"
     ],
     "cSpell.ignoreRegExpList": [
         "devcontainers?"
