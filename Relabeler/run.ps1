@@ -164,11 +164,10 @@ if ($payload)
 
     if ($payload.action)
     {
-        $eventAction = $payload.action
+        $eventOrganization = $payload.sender ? $payload.sender.login : $null
         $eventRepository = $payload.repository ? $payload.repository.name : $null
-        $eventSender = $payload.sender ? $payload.sender.login : $null
-        $eventRef = $payload.ref
-        $eventRefType = $payload.ref_type
+        $eventAction = $payload.action
+
         $isPullRequest = $payload.pull_request -or $payload.issue.pull_request ? $true : $false
 
         # PR: https://github.com/johlju/DebugApps/pull/81
@@ -183,28 +182,22 @@ if ($payload)
 
         #$labels = $payload.issue.labels | ForEach-Object { $_.name }
 
-        Write-Host -Object "Action: $($eventAction)"
+        # TODO: This need to handle resource name based on the eventType
+        $resource = $eventType -match 'issue' -and $isPullRequest ? "Pull Request" : "Issue"
+
+        Write-Host -Object "Organization: $($eventOrganization)"
         Write-Host -Object "Repository: $($eventRepository)"
-        Write-Host -Object "Sender: $($eventSender)"
-        Write-Host -Object "Ref: $($eventRef)"
-        Write-Host -Object "RefType: $($eventRefType)"
+        Write-Host -Object "Resource: $($resource)"
+        Write-Host -Object "EventType: $($eventType)"
+        Write-Host -Object "EventAction: $($eventAction)"
         Write-Host -Object "IsPullRequest: $($isPullRequest)"
 
-        # TODO: This need to be structured with repository, eventType, eventAction and maybe other properties.
-        $metricName = '{0}.{1}' -f $eventType, $eventAction
-
-        Send-Metric -Name $metricName -Value 1
-
-        $logEntry = @{
-            Timestamp  = (Get-Date).ToString("o")
-            Level      = "Information"
-            Message    = "Processed webhook successfully."
-            EventType  = $eventType
-            Action     = $eventAction
-            Repository = $payload.repository.name
-        }
-
-        Write-Host -Object (ConvertTo-Json $logEntry)
+        Send-Metric -Value 1 `
+            -Organization $eventOrganization `
+            -Repository $eventRepository `
+            -Resource $resource `
+            -EventType $eventType `
+            -EventAction $eventAction
     }
 
     Write-Host "Webhook processed successfully."

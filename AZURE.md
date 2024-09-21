@@ -124,6 +124,15 @@ $InstrumentationKey = (Invoke-RestMethod -Method GET -Headers @{Authorization = 
 Use Kusto Query Language (KQL) to query different types of logs. For example:
 
 ```sql
+customMetrics
+  | where name == "RepositoryEvent"
+  | where timestamp >= ago(7d)  // Last 7 days
+  | summarize HitCount = count() by Organization = tostring(customDimensions.Organization), Repository = tostring(customDimensions.Repository), Resource = tostring(customDimensions.Resource), EventType = tostring(customDimensions.EventType), EventAction = tostring(customDimensions.EventAction)
+  | order by HitCount desc
+  | render barchart
+```
+
+```sql
 /* View trace logs, last 5 minutes */
 traces
 | where timestamp >= ago(5m)

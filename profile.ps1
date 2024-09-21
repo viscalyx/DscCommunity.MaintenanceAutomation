@@ -70,8 +70,8 @@ if ([System.String]::IsNullOrEmpty($env:APPINSIGHTS_INSTRUMENTATIONKEY))
 function Send-Metric
 {
     param (
-        [Parameter(Mandatory = $true)]
-        [string]$name, # The name of the custom metric.
+        [Parameter()]
+        [string]$BaseName = 'RepositoryEvent', # The base name of the custom metric, e.g., "RepositoryEvent"
 
         [Parameter(Mandatory = $true)]
         [int]$value, # The numerical value of the metric.
@@ -84,15 +84,66 @@ function Send-Metric
 
         [int]$stdDev = 0, # The standard deviation of the metric.
 
-        [int]$sum = $value
+        [int]$sum = $value,
+
+        [Parameter(Mandatory = $true)]
+        [string]$organization, # The name of the organization the repository belongs to
+
+        [Parameter(Mandatory = $true)]
+        [string]$repository, # The name of the repository
+
+        [Parameter(Mandatory = $true)]
+        [string]$resource, # The resource type (e.g., 'Pull Request', 'Issue')
+
+        [Parameter(Mandatory = $true)]
+        [string]$eventType, # The event type (e.g., 'issue_comment')
+
+        [Parameter(Mandatory = $true)]
+        [string]$eventAction # The event action (e.g., 'opened')
     )
 
     # TODO: Make this configurable via an environment variable
     # Application Insights Configuration
     $IngestionEndpoint = "https://dc.services.visualstudio.com/v2/track"
 
+    # Validate Repository parameter
+    if (-not $repository)
+    {
+        Write-Error "Repository parameter is mandatory. Please provide a valid repository name."
+        return
+    }
+
+    # Validate Resource parameter
+    if (-not $resource)
+    {
+        Write-Error "Resource parameter is mandatory. Please provide a valid resource type (e.g., 'Pull Request', 'Issue')."
+        return
+    }
+
+    # Validate Organization parameter
+    if (-not $organization)
+    {
+        Write-Error "Organization parameter is mandatory. Please provide a valid organization name."
+        return
+    }
+
+    # Validate EventType parameter
+    if (-not $eventType)
+    {
+        Write-Error "EventType parameter is mandatory. Please provide a valid event type (e.g., 'issue_comment')."
+        return
+    }
+
+    # Validate EventAction parameter
+    if (-not $eventAction)
+    {
+        Write-Error "EventAction parameter is mandatory. Please provide a valid event action (e.g., 'opened')."
+        return
+    }
+
+
     $body = @{
-        name = "Microsoft.ApplicationInsights.$name"
+        name = "Microsoft.ApplicationInsights.$BaseName"  # e.g., "Microsoft.ApplicationInsights.RepositoryEvent"
         time = (Get-Date).ToUniversalTime().ToString("o")
         iKey = $InstrumentationKey
         data = @{
@@ -100,34 +151,46 @@ function Send-Metric
             baseData = @{
                 metrics = @(
                     @{
-                        name   = $name
-                        value  = $value
-                        count  = $count
-                        min    = $min
-                        max    = $max
-                        stdDev = $stdDev
-                        sum    = $sum
+                        name       = $BaseName
+                        value      = $value
+                        count      = $count
+                        min        = $min
+                        max        = $max
+                        stdDev     = $stdDev
+                        sum        = $sum
+                        dimensions = @(
+                            @{
+                                name  = "Organization"
+                                value = $organization
+                            },
+                            @{
+                                name  = "Repository"
+                                value = $repository
+                            },
+                            @{
+                                name  = "Resource"
+                                value = $resource
+                            },
+                            @{
+                                name  = "EventType"
+                                value = $eventType
+                            },
+                            @{
+                                name  = "EventAction"
+                                value = $eventAction
+                            }
+                        )
                     }
                 )
             }
         }
-    } | ConvertTo-Json -Depth 5
+    } | ConvertTo-Json -Depth 10 -Compress
 
     try
     {
-        Invoke-RestMethod -Method Post -ContentType "application/json" -Body $body -Uri $IngestionEndpoint
+        $null = Invoke-RestMethod -Method Post -ContentType "application/json" -Body $body -Uri $IngestionEndpoint
 
-        # $metricLog = @{
-        #     name  = "CustomMetric"
-        #     value = 5
-        #     tags  = @{
-        #         Environment = "Production"
-        #         FunctionName = "ProcessWebhook"
-        #     }
-        # }
-        # Write-Host (ConvertTo-Json $metricLog)
-
-        Write-Host "Metric '$name' sent successfully with value $value."
+        Write-Host "Metric '$BaseName' sent successfully with value $value. Dimensions - Repository: '$repository', Resource: '$resource', EventType: '$eventType', EventAction: '$eventAction'."
     }
     catch
     {
