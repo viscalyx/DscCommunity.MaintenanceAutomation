@@ -81,6 +81,8 @@ For an isolated and consistent development environment, use the provided develop
 1. **Prerequisites**
 
    - **Visual Studio Code** with the [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension installed.
+   - Read [Sharing Git credentials with your container](https://code.visualstudio.com/remote/advancedcontainers/sharing-git-credentials)
+     and see if you need to take actions.
 
 2. **Open the Project in the Dev Container**
 

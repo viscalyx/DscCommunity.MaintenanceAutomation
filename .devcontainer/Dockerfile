@@ -29,6 +29,7 @@ RUN apt-get update \
     nano \
     locales \
     gpg \
+    gnupg2 \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
