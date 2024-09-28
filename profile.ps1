@@ -266,80 +266,109 @@ function Assert-GitHubPayloadSignature
 
     Write-Host "Validating payload signature."
 
-    $bodyData = [System.Text.Encoding]::UTF8.GetBytes($Request.RawBody)
-    $keyData = [System.Text.Encoding]::UTF8.GetBytes($env:RELABELER_WEBHOOK_SECRET)
+    $secretPlainText = $env:RELABELER_WEBHOOK_SECRET
 
-    # cSpell: ignore HMACSHA256
-    $hmacSha256 = [System.Security.Cryptography.HMACSHA256]::new($keyData)
-
-    $bodyHash = $hmacSha256.ComputeHash($bodyData)
-
-    $hmacSha256.Dispose()
-
-    $calculatedSignatureHash = 'sha256={0}' -f [System.BitConverter]::ToString($bodyHash).ToLower().Replace('-', '')
-
-    $payloadSignature = $Request.headers.'x-hub-signature-256'
-
-    if ($payloadSignature -ne $calculatedSignatureHash)
+    if (-not $secretPlainText)
     {
-        Write-Error -Message ('Incorrect payload signature! Expected signature ''{0}'', but was ''{1}''.' -f $payloadSignature, $calculatedSignatureHash)
+        Write-Error -Message 'RELABELER_WEBHOOK_SECRET environment variable is not set.'
 
-        $ResponseCode.Value = [HttpStatusCode]::Unauthorized
-        $Body.Value = "The sha256 hash signature was incorrect, access not allowed."
+        $ResponseCode.Value = [HttpStatusCode]::InternalServerError
+        $Body.Value = "Server configuration error."
+
+        return
     }
     else
+    {
+        $secret = ConvertTo-SecureString -String $secretPlainText -AsPlainText -Force
+    }
+
+    $payloadString = $Request.RawBody
+    $sourceSignature = $Request.headers.'x-hub-signature-256'
+
+    if ([System.String]::IsNullOrEmpty($sourceSignature))
+    {
+        Write-Error -Message 'Missing x-hub-signature-256 header. Provide a valid signature to validate the payload.'
+
+        $ResponseCode.Value = [HttpStatusCode]::Unauthorized
+        $Body.Value = "Missing x-hub-signature-256 header. Provide a valid signature to validate the payload."
+
+        return
+    }
+
+    $isSignatureValid = Test-Sha256SignatureHash -PayloadString $payloadString -Secret $secret -SourceSignature $sourceSignature
+
+    if ($isSignatureValid)
     {
         Write-Host 'Signature is valid.'
 
         $ResponseCode.Value = [HttpStatusCode]::OK
         $Body.Value = $null
     }
+    else
+    {
+        Write-Error -Message ('Payload sha256 hash signature ''{0}'' is not valid! Unauthorized.' -f $SourceSignature)
+
+        $ResponseCode.Value = [HttpStatusCode]::Unauthorized
+        $Body.Value = "Payload sha256 hash signature ''{0}'' is not valid! Unauthorized."
+    }
 }
 
 function Test-Sha256SignatureHash
 {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [System.String]$PayloadString,
+    param
+    (
+        [System.String]
+        $PayloadString,
 
-        [Parameter(Mandatory = $true)]
-        [System.Security.SecureString]$Secret,
+        [System.Security.SecureString]
+        $Secret,
 
-        [Parameter(Mandatory = $true)]
-        [System.String]$SourceSignature
+        [System.String]
+        $SourceSignature
     )
 
-    Write-Host "[INFO] Checking the secret"
+    # Get the calculated signature hash using the new function
+    $calculatedSignatureHash = Get-Sha256SignatureHash -PayloadString $PayloadString -Secret $Secret
 
-    # Convert SecureString to plain text
-    $plainSecret = ConvertFrom-SecureString -SecureString $Secret -AsPlainText
-
-    # Convert the payload and secret to byte arrays
-    $bodyData = [System.Text.Encoding]::UTF8.GetBytes($PayloadString)
-    $keyData = [System.Text.Encoding]::UTF8.GetBytes($plainSecret)
-
-    # Compute HMAC SHA256 hash
-    $hmac = [System.Security.Cryptography.HMACSHA256]::new($keyData)
-    $bodyHash = $hmac.ComputeHash($bodyData)
-    $hmac.Dispose()
-
-    # Convert the hash to a hexadecimal string
-    $sha256 = [System.BitConverter]::ToString($bodyHash).ToLower().Replace("-", "")
-    $computedSignature = "sha256=$sha256"
-
-    Write-Host "[INFO] Computed Signature: $computedSignature"
-    Write-Host "[INFO] Source Signature: $SourceSignature"
-
-    # Compare the computed signature with the source signature
-    if ($computedSignature -ne $SourceSignature)
+    # Compare the source signature with the calculated signature
+    if ($SourceSignature -eq $calculatedSignatureHash)
     {
-        Write-Host "[ERROR] Incorrect secret!"
-        return $false
+        $result = $true
     }
     else
     {
-        Write-Host "[INFO] Secret is correct"
-        return $true
+        $result = $false
     }
+
+    return $result
+}
+
+function Get-Sha256SignatureHash
+{
+    param
+    (
+        [System.String]
+        $PayloadString,
+
+        [System.Security.SecureString]
+        $Secret
+    )
+
+    # Convert SecureString to plain text
+    $unsecureSecret = ConvertFrom-SecureString -SecureString $Secret -AsPlainText
+
+    $payloadData = [System.Text.Encoding]::UTF8.GetBytes($PayloadString)
+    $keyData = [System.Text.Encoding]::UTF8.GetBytes($unsecureSecret)
+
+    # cSpell: ignore HMACSHA256
+    $hmacSha256 = [System.Security.Cryptography.HMACSHA256]::new($keyData)
+    $payloadHash = $hmacSha256.ComputeHash($payloadData)
+    $hmacSha256.Dispose()
+
+    # Format the calculated signature
+    $calculatedSignatureHash = 'sha256={0}' -f ([BitConverter]::ToString($payloadHash) -replace '-', '').ToLower()
+
+    Write-Debug -Message "Calculated signature hash: $calculatedSignatureHash"
+
+    return $calculatedSignatureHash
 }

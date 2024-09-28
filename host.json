@@ -11,7 +11,8 @@
     "logLevel": {
       "Function": "Information",
       "Host": "Information",
-      "Default": "Information"
+      "Default": "Information",
+      "Host.Aggregator": "Information"
     }
   },
   "extensionBundle": {
