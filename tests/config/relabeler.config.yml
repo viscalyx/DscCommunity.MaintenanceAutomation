@@ -8,72 +8,113 @@
 pulls:
   labels:
     - label:
-        name: "waiting for code fix"
-        add:
-          - when:
-              statuses:
-                continuous-integration/appveyor/pr: failure
-                license/cla: success
-              notLabeled:
-                - on hold
-          - when:
-              statuses:
-                license/cla: success
-              canBeMerged: false
-          - when:
-              statuses:
-                license/cla: success
-              reviewRequestChange: true # Means GitHub Review comment (change without LGTM comment, or blocked)
-        remove:
-          - when:
-              statuses:
-                continuous-integration/appveyor/pr: success
-                license/cla: success
-              canBeMerged: true
-              # To determine this, maybe each review comment int he PR must be evaluated, to finally get true or false.
-              reviewResponseToRequestChange: true # Means one or more GitHub review comments that starts with 'Done'.
-              onPush: true
-          - when:
-              labeled:
-                - on hold
-          - when:
-              reviewApproved: true
-
+      name: "needs review" # This is the label we want to set, so it is implicitly checked.
+      add:
+        - when: # or, this - In each when: all properties uses AND, and whens uses OR.
+          notLabeled:
+            - on hold
+        - when: # or, this
+          notLabeled:
+            - waiting for author response
+        - when: # or, this
+          notLabeled:
+            - waiting for code fix
+      remove:
+        - when: # or, this
+          canBeMerged: true
+        - when:
+          reviewApproved: true
     - label:
-        name: "needs review"
-        add:
-          - when:
-              statuses:
-                continuous-integration/appveyor/pr: success
-                license/cla: success
-              canBeMerged: true
-              reviewResponseToRequestChange: true
-              notLabeled:
-                - waiting for author response
-              onPush: true
-        remove:
-          - when:
-              statuses:
-                continuous-integration/appveyor/pr: failure
-          - when:
-              statuses:
-                license/cla: pending
-          - when:
-              canBeMerged: true
-          - when:
-              labeled:
-                - waiting for author response
-
+      name: "waiting for code fix"
+      add:
+        - when:
+          reviewApproved: false # Change to review comments
+      remove:
+        - when:
+          onPush: true
     - label:
-        name: "ready for merge"
-        add:
-          - when:
-              notLabeled:
-                - waiting for author response
-                - waiting for code fix
-              reviewApproved: true # This could check that only be true if there are no pushes after last approval.
-        remove:
-          - when:
-              labeled:
-                - waiting for author response
-                - waiting for code fix
+      name: "ready for merge"
+      add:
+        - when: # or, this
+          canBeMerged: true # and, this
+          notLabeled: # and, this
+            - on hold
+            - waiting for author response
+            - waiting for code fix
+          reviewApproved: true # This could check that only be true if there are no pushes after last approval.
+      remove:
+        - when:
+          onPush: true
+
+# pulls:
+#   labels:
+#     - label:
+#         name: "waiting for code fix"
+#         add:
+#           - when:
+#               statuses:
+#                 continuous-integration/appveyor/pr: failure
+#                 license/cla: success
+#               notLabeled:
+#                 - on hold
+#           - when:
+#               statuses:
+#                 license/cla: success
+#               canBeMerged: false
+#           - when:
+#               statuses:
+#                 license/cla: success
+#               reviewRequestChange: true # Means GitHub Review comment (change without LGTM comment, or blocked)
+#         remove:
+#           - when:
+#               statuses:
+#                 continuous-integration/appveyor/pr: success
+#                 license/cla: success
+#               canBeMerged: true
+#               # To determine this, maybe each review comment int he PR must be evaluated, to finally get true or false.
+#               reviewResponseToRequestChange: true # Means one or more GitHub review comments that starts with 'Done'.
+#               onPush: true
+#           - when:
+#               labeled:
+#                 - on hold
+#           - when:
+#               reviewApproved: true
+
+#     - label:
+#         name: "needs review"
+#         add:
+#           - when:
+#               statuses:
+#                 continuous-integration/appveyor/pr: success
+#                 license/cla: success
+#               canBeMerged: true
+#               reviewResponseToRequestChange: true
+#               notLabeled:
+#                 - waiting for author response
+#               onPush: true
+#         remove:
+#           - when:
+#               statuses:
+#                 continuous-integration/appveyor/pr: failure
+#           - when:
+#               statuses:
+#                 license/cla: pending
+#           - when:
+#               canBeMerged: true
+#           - when:
+#               labeled:
+#                 - waiting for author response
+
+#     - label:
+#         name: "ready for merge"
+#         add:
+#           - when:
+#               notLabeled:
+#                 - waiting for author response
+#                 - waiting for code fix
+#               reviewApproved: true # This could check that only be true if there are no pushes after last approval.
+#         remove:
+#           - when:
+#               labeled:
+#                 - waiting for author response
+#                 - waiting for code fix

@@ -9,6 +9,28 @@ param($Request, $TriggerMetadata)
 # Log Information using Write-Host
 Write-Host "Relabeler processing a request." # Gives INFORMATION in Azure Logs
 
+# Initialize response variables
+$responseCode = $null
+$body = $null
+
+# Assert GitHub Payload Signature
+Assert-GitHubPayloadSignature -Request $Request -ResponseCode ([ref] $responseCode) -Body ([ref] $body)
+
+# Handle unauthorized access
+if ($ResponseCode -eq [HttpStatusCode]::Unauthorized)
+{
+    Write-Error "Payload signature does not match. Unauthorized access."
+
+    # TODO: Log a metric to Application Insights
+
+    # Return unauthorized response
+    Push-OutputBinding -Name Response -Value ([HttpResponseContext] @{
+            StatusCode = $ResponseCode
+            Body       = $Body
+        })
+    return
+}
+
 $InstrumentationKey = $env:APPINSIGHTS_INSTRUMENTATIONKEY
 
 if (-not $InstrumentationKey)
@@ -58,6 +80,7 @@ Write-Debug -Message "Query: $($Request.Query | Out-String)"
 Write-Debug -Message "Url: $($Request.Url | Out-String)"
 
 $eventType = $Request.Headers['x-github-event']
+$eventType = $eventType ? $eventType.ToLower() : 'unknown'
 
 Write-Host -Object "x-github-event: $($eventType | Out-String)"
 
@@ -180,7 +203,22 @@ if ($payload)
         # Get all labels for issue: https://api.github.com/repos/johlju/DebugApps/issues/5/labels
         # Get specific labels: https://api.github.com/repos/johlju/DebugApps/issues/5/labels{/name}
 
-        #$labels = $payload.issue.labels | ForEach-Object { $_.name }
+        $payloadLabels = $null
+
+        if ($payload.issue.labels)
+        {
+            $payloadLabels = $payload.issue.labels
+        }
+        elseif ($payload.pull_request.labels)
+        {
+            $payloadLabels = $payload.pull_request.labels
+        }
+
+        $assignedLabelNames = $payloadLabels | ForEach-Object -Process {
+            $_.name
+        }
+
+        Write-Host -Object "Assigned Labels: $($assignedLabelNames -join ', ')"
 
         # TODO: This need to handle resource name based on the eventType
         $resource = $eventType -match 'issue' -and $isPullRequest ? "Pull Request" : "Issue"
@@ -198,6 +236,36 @@ if ($payload)
             -Resource $resource `
             -EventType $eventType `
             -EventAction $eventAction
+
+        if ($isPullRequest)
+        {
+            $configuredLabels = $config.pulls.labels.label.name
+
+            # Output the labels to handle from configuration
+            Write-Host -Object "Labels to handle: $($configuredLabels -join ', ' | Out-String)"
+
+            # Operations to perform based on the configuration
+            $assignedLabelNames | ForEach-Object -Process {
+                # Loop thought configured labels to see which should be added based on unassigned labels
+                if ($configuredLabels -notcontains $_)
+                {
+                    Write-Host -Object "Assigned label '$_' is not configured to be handled, checking if it should be added."
+                }
+
+                # Loop thought assigned labels to see which should be removed based on configured labels
+                if ($configuredLabels -contains $_)
+                {
+                    Write-Host -Object "Assigned label '$_' is configured to be handled, checking if it should be removed."
+                }
+            }
+        }
+        else
+        {
+            $configuredLabels = $config.issues.labels.label.name
+
+            # Output the labels to handle from configuration
+            Write-Host -Object "Labels to handle: $($config.issues.labels.label.name -join ', ' | Out-String)"
+        }
     }
 
     Write-Host "Webhook processed successfully."

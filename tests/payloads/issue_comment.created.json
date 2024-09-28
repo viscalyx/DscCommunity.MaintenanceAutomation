@@ -40,6 +40,15 @@
                 "color": "800000",
                 "default": false,
                 "description": "The issue or pull request is blocking the next release. Higher priority than label 'High priority'."
+            },
+            {
+                "id": 950271779,
+                "node_id": "MDU6TGFiZWw5NTAyNzE3Nzk=",
+                "url": "https://api.github.com/repos/johlju/DebugApps/labels/bug",
+                "name": "bug",
+                "color": "d73a4a",
+                "default": false,
+                "description": null
             }
         ],
         "state": "open",
