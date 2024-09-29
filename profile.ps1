@@ -21,55 +21,50 @@
 
 # You can also define functions or aliases that can be referenced in any of your PowerShell functions.
 
-Write-Host "Loading StackExchange.Redis assembly"
+Write-Host 'Loading StackExchange.Redis assembly'
 
 # Load the StackExchange.Redis assembly
 Add-Type -Path (Join-Path $PSScriptRoot './Relabeler/bin/netstandard2.0/StackExchange.Redis.dll')
 
 # Import necessary modules
 Import-Module Az.ApplicationInsights
+Import-Module powershell-yaml
 
-# Import the YAML module if the RELABELER_CONFIG_PATH environment variable is not set
-if ([System.String]::IsNullOrEmpty($env:RELABELER_CONFIG_PATH))
-{
-    # Import the YAML module
-    Import-Module powershell-yaml
-}
+# if ([System.String]::IsNullOrEmpty($env:APPINSIGHTS_INSTRUMENTATIONKEY))
+# {
+#     <#
+#         When developing and testing Azure Functions locally, accessing Azure services that rely
+#         on Managed Identities such as Azure Key Vault—can pose challenging. This is because
+#         the **Managed Identity endpoint (`http://169.254.169.254`)** is **only available within
+#         the Azure environment**. Consequently, the PowerShell script cannot access this endpoint
+#         when running on the local machine, resulting in authentication failures.
+#     #>
+#     $KeyVaultName = 'kvRelabeler'
+#     $SecretName = 'InstrumentationKey'
 
-if ([System.String]::IsNullOrEmpty($env:APPINSIGHTS_INSTRUMENTATIONKEY))
-{
-    <#
-        When developing and testing Azure Functions locally, accessing Azure services that rely
-        on Managed Identities such as Azure Key Vault—can pose challenging. This is because
-        the **Managed Identity endpoint (`http://169.254.169.254`)** is **only available within
-        the Azure environment**. Consequently, your PowerShell script cannot access this endpoint
-        when running on your local machine, resulting in authentication failures.
-    #>
-    $KeyVaultName = "kvRelabeler"
-    $SecretName = "InstrumentationKey"
+#     # User-Assigned Managed Identity Client ID
+#     $UserAssignedIdentityClientId = $env:IDENTITY_CLIENT_ID
 
-    # User-Assigned Managed Identity Client ID
-    $UserAssignedIdentityClientId = $env:IDENTITY_CLIENT_ID
+#     # Azure Environment and Resource for Key Vault
+#     $VaultResource = 'https://vault.azure.net'
 
-    # Azure Environment and Resource for Key Vault
-    $VaultResource = "https://vault.azure.net"
+#     # Obtain an Access Token using the User-Assigned Managed Identity
+#     $AccessTokenResponse = Invoke-RestMethod -Method Post -Uri "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2019-08-01&resource=$VaultResource&client_id=$UserAssignedIdentityClientId" -Headers @{Metadata = 'true' }
 
-    # Obtain an Access Token using the User-Assigned Managed Identity
-    $AccessTokenResponse = Invoke-RestMethod -Method Post -Uri "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2019-08-01&resource=$VaultResource&client_id=$UserAssignedIdentityClientId" -Headers @{Metadata = "true" }
+#     $AccessToken = $AccessTokenResponse.access_token
 
-    $AccessToken = $AccessTokenResponse.access_token
+#     $SecretUri = "https://$KeyVaultName.vault.azure.net/secrets/$SecretName?api-version=7.0"
 
-    $SecretUri = "https://$KeyVaultName.vault.azure.net/secrets/$SecretName?api-version=7.0"
+#     # Retrieve the Instrumentation Key from Azure Key Vault
+#     $InstrumentationKey = (Invoke-RestMethod -Method GET -Headers @{Authorization = "Bearer $AccessToken" } -Uri $SecretUri).value
 
-    # Retrieve the Instrumentation Key from Azure Key Vault
-    $InstrumentationKey = (Invoke-RestMethod -Method GET -Headers @{Authorization = "Bearer $AccessToken" } -Uri $SecretUri).value
-
-    $env:APPINSIGHTS_INSTRUMENTATIONKEY = $InstrumentationKey
-}
+#     $env:APPINSIGHTS_INSTRUMENTATIONKEY = $InstrumentationKey
+# }
 
 function Send-Metric
 {
-    param (
+    param
+    (
         [Parameter()]
         [string]$BaseName = 'RepositoryEvent', # The base name of the custom metric, e.g., "RepositoryEvent"
 
@@ -104,12 +99,12 @@ function Send-Metric
 
     # TODO: Make this configurable via an environment variable
     # Application Insights Configuration
-    $IngestionEndpoint = "https://dc.services.visualstudio.com/v2/track"
+    $IngestionEndpoint = 'https://dc.services.visualstudio.com/v2/track'
 
     # Validate Repository parameter
     if (-not $repository)
     {
-        Write-Error "Repository parameter is mandatory. Please provide a valid repository name."
+        Write-Error 'Repository parameter is mandatory. Please provide a valid repository name.'
         return
     }
 
@@ -123,7 +118,7 @@ function Send-Metric
     # Validate Organization parameter
     if (-not $organization)
     {
-        Write-Error "Organization parameter is mandatory. Please provide a valid organization name."
+        Write-Error 'Organization parameter is mandatory. Please provide a valid organization name.'
         return
     }
 
@@ -144,10 +139,10 @@ function Send-Metric
 
     $body = @{
         name = "Microsoft.ApplicationInsights.$BaseName"  # e.g., "Microsoft.ApplicationInsights.RepositoryEvent"
-        time = (Get-Date).ToUniversalTime().ToString("o")
+        time = (Get-Date).ToUniversalTime().ToString('o')
         iKey = $InstrumentationKey
         data = @{
-            baseType = "MetricData"
+            baseType = 'MetricData'
             baseData = @{
                 metrics = @(
                     @{
@@ -160,23 +155,23 @@ function Send-Metric
                         sum        = $sum
                         dimensions = @(
                             @{
-                                name  = "Organization"
+                                name  = 'Organization'
                                 value = $organization
                             },
                             @{
-                                name  = "Repository"
+                                name  = 'Repository'
                                 value = $repository
                             },
                             @{
-                                name  = "Resource"
+                                name  = 'Resource'
                                 value = $resource
                             },
                             @{
-                                name  = "EventType"
+                                name  = 'EventType'
                                 value = $eventType
                             },
                             @{
-                                name  = "EventAction"
+                                name  = 'EventAction'
                                 value = $eventAction
                             }
                         )
@@ -188,7 +183,7 @@ function Send-Metric
 
     try
     {
-        $null = Invoke-RestMethod -Method Post -ContentType "application/json" -Body $body -Uri $IngestionEndpoint
+        $null = Invoke-RestMethod -Method Post -ContentType 'application/json' -Body $body -Uri $IngestionEndpoint
 
         Write-Host "Metric '$BaseName' sent successfully with value $value. Dimensions - Repository: '$repository', Resource: '$resource', EventType: '$eventType', EventAction: '$eventAction'."
     }
@@ -212,11 +207,11 @@ function Get-RepoConfig
         if ([System.String]::IsNullOrEmpty($env:RELABELER_CONFIG_PATH))
         {
             $headers = @{
-                "Authorization" = "token $GithubToken"
-                "User-Agent"    = "AzureFunction-Relabeler"
+                'Authorization' = "token $GithubToken"
+                'User-Agent'    = 'AzureFunction-Relabeler'
             }
 
-            $configPath = ".github/relabeler-config.yml"
+            $configPath = '.github/relabeler-config.yml'
             $configApiUrl = "$ApiUrl/contents/$configPath"
 
             Write-Information "Retrieving configuration from $configApiUrl." -InformationAction 'Continue'
@@ -255,12 +250,12 @@ function Get-RepoConfig
 
         if (-not $isValid)
         {
-            Write-Error "Configuration validation failed. JSON does not conform to the provided schema."
+            Write-Error 'Configuration validation failed. JSON does not conform to the provided schema.'
 
             return $null
         }
 
-        Write-Information "Configuration validated successfully against the schema." -InformationAction 'Continue'
+        Write-Information 'Configuration validated successfully against the schema.' -InformationAction 'Continue'
 
         # Return the configuration as a PowerShell object
         return [PSCustomObject] $configHashtable
@@ -289,7 +284,7 @@ function Assert-GitHubPayloadSignature
         [ref] $Body
     )
 
-    Write-Host "Validating payload signature."
+    Write-Host 'Validating payload signature.'
 
     $secretPlainText = $env:RELABELER_WEBHOOK_SECRET
 
@@ -298,7 +293,7 @@ function Assert-GitHubPayloadSignature
         Write-Error -Message 'RELABELER_WEBHOOK_SECRET environment variable is not set.'
 
         $ResponseCode.Value = [HttpStatusCode]::InternalServerError
-        $Body.Value = "Server configuration error."
+        $Body.Value = 'Server configuration error.'
 
         return
     }
@@ -315,7 +310,7 @@ function Assert-GitHubPayloadSignature
         Write-Error -Message 'Missing x-hub-signature-256 header. Provide a valid signature to validate the payload.'
 
         $ResponseCode.Value = [HttpStatusCode]::Unauthorized
-        $Body.Value = "Missing x-hub-signature-256 header. Provide a valid signature to validate the payload."
+        $Body.Value = 'Missing x-hub-signature-256 header. Provide a valid signature to validate the payload.'
 
         return
     }
