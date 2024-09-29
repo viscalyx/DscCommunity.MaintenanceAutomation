@@ -1,8 +1,3 @@
-Debug: <https://github.com/johlju/DebugApps/pull/81>
-
-Create a secure GitHub webhook to trigger an Azure PowerShell Function: <https://4bes.nl/2021/04/04/create-a-secure-github-webhook-to-trigger-an-azure-powershell-function/>
-Automating with GitHub and Azure Function apps: <https://4bes.nl/2020/09/02/automating-with-github-and-azure-function-apps/>
-
 Supported PowerShell version in Azure Function: <https://learn.microsoft.com/en-us/azure/azure-functions/functions-versions?tabs=isolated-process%2Cv4&pivots=programming-language-powershell>
 
 Triggers and binding: <https://learn.microsoft.com/en-us/azure/azure-functions/functions-triggers-bindings?tabs=isolated-process%2Cnode-v4%2Cpython-v2&pivots=programming-language-powershell>
@@ -38,3 +33,13 @@ Quickstart: Create a PowerShell function in Azure using Visual Studio Code: <htt
 Azure Functions PowerShell developer guide: <https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-powershell?tabs=portal>
 
 Helper module that helps emulate the Azure Functions environment in a PowerShell session: <https://gist.github.com/TylerLeonhardt/bca6e0991fd12889fce0ebc420e64667>
+
+## CSharp (C#)
+
+Logging to Application Insights: <https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide?tabs=windows#application-insights>
+How to configure monitoring for Azure Functions: <https://learn.microsoft.com/en-us/azure/azure-functions/configure-monitoring?tabs=v2>
+
+## OLD
+
+Create a secure GitHub webhook to trigger an Azure PowerShell Function: <https://4bes.nl/2021/04/04/create-a-secure-github-webhook-to-trigger-an-azure-powershell-function/>
+Automating with GitHub and Azure Function apps: <https://4bes.nl/2020/09/02/automating-with-github-and-azure-function-apps/>

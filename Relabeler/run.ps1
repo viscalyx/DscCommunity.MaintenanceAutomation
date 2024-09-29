@@ -173,17 +173,9 @@ if ($payload)
                 StatusCode = [HttpStatusCode]::BadRequest
                 Body       = "Configuration not found."
             })
+
         return
     }
-
-    # if (-not $config.actionLabelMapping) {
-    #     Write-Error "Invalid configuration format."
-    #     Push-OutputBinding -Name Response -Value ([HttpResponseContext] @{
-    #         StatusCode = [HttpStatusCode]::BadRequest
-    #         Body       = "Invalid configuration."
-    #     })
-    #     return
-    # }
 
     if ($payload.action)
     {

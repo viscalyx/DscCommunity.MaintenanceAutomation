@@ -217,7 +217,7 @@ function Get-RepoConfig
             }
 
             $configPath = ".github/relabeler-config.yml"
-            $configApiUrl = "$apiUrl/contents/$configPath"
+            $configApiUrl = "$ApiUrl/contents/$configPath"
 
             Write-Information "Retrieving configuration from $configApiUrl." -InformationAction 'Continue'
 
@@ -228,7 +228,6 @@ function Get-RepoConfig
 
             # Convert bytes to UTF8 string
             $content = [System.Text.Encoding]::UTF8.GetString($decodedBytes)
-
         }
         else
         {
@@ -237,12 +236,38 @@ function Get-RepoConfig
             $content = Get-Content -Raw -Path $env:RELABELER_CONFIG_PATH
         }
 
-        # Convert YAML to Hashtable, Hashtable to JSON and then JSON to a PowerShell object
-        return [PSCustomObject] ($content | ConvertFrom-Yaml) #| ConvertTo-Json -Depth 10 -Compress | ConvertFrom-Json
+        # Convert YAML to JSON
+        $configHashtable = $content | ConvertFrom-Yaml
+        $configJson = $configHashtable | ConvertTo-Json -Depth 10 -Compress
+
+        # Load JSON schema
+        $schemaPath = Resolve-Path -Path './Relabeler/schemas/relabeler-config.schema.json'
+
+        if (-not (Test-Path -Path $schemaPath))
+        {
+            Write-Error "Configuration schema file not found at path: $schemaPath"
+
+            return $null
+        }
+
+        # Validate the JSON against the schema using Test-Json
+        $isValid = Test-Json -Json $configJson -SchemaFile $schemaPath
+
+        if (-not $isValid)
+        {
+            Write-Error "Configuration validation failed. JSON does not conform to the provided schema."
+
+            return $null
+        }
+
+        Write-Information "Configuration validated successfully against the schema." -InformationAction 'Continue'
+
+        # Return the configuration as a PowerShell object
+        return [PSCustomObject] $configHashtable
     }
     catch
     {
-        Write-Error "Failed to fetch configuration: $_"
+        Write-Error "Failed to fetch or validate configuration: $_"
 
         return $null
     }
